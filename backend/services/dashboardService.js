@@ -1,6 +1,8 @@
 const Task = require('../models/Task');
 const { todayKey, dayRange, addDaysToKey } = require('../utils/date');
 const { getHabitsForDate } = require('./habitService');
+const { computeDay } = require('./productivityService');
+const { getXpSnapshot } = require('./xpService');
 
 const PRIORITY_RANK = { high: 3, medium: 2, low: 1 };
 
@@ -19,7 +21,7 @@ async function getDashboard(user) {
   const upcomingStart = dayRange(addDaysToKey(date, 1)).start;
   const upcomingEnd = dayRange(addDaysToKey(date, 8)).start;
 
-  const [todayTasks, upcomingTasks, allHabits] = await Promise.all([
+  const [todayTasks, upcomingTasks, allHabits, productivity, xp] = await Promise.all([
     Task.find({
       userId: user._id,
       dueDate: { $gte: todayRange.start, $lt: todayRange.end },
@@ -33,6 +35,8 @@ async function getDashboard(user) {
       .limit(5)
       .lean(),
     getHabitsForDate(user._id, date),
+    computeDay(user, date),
+    getXpSnapshot(user),
   ]);
 
   const sortedTasks = sortTodayTasks(todayTasks);
@@ -71,6 +75,8 @@ async function getDashboard(user) {
     todayTasks: sortedTasks,
     todayHabits,
     upcomingTasks,
+    productivity,
+    xp,
     progress: {
       taskCompletionRate,
       habitCompletionRate,

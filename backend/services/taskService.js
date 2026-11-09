@@ -16,6 +16,7 @@ const {
   nextRecurrenceDateKey,
   todayKey,
 } = require('../utils/date');
+const rewardsService = require('./rewardsService');
 
 const PRIORITIES = ['low', 'medium', 'high'];
 const RECURRENCES = ['none', 'daily', 'weekly', 'monthly'];
@@ -135,7 +136,7 @@ async function getOwnedTask(taskId, userId) {
   return task;
 }
 
-async function createTask(userId, body) {
+async function createTask(userId, body, user) {
   const payload = normalizeCreatePayload(body);
   const taskId = new mongoose.Types.ObjectId();
 
@@ -146,12 +147,17 @@ async function createTask(userId, body) {
     ...(payload.recurrence !== 'none' ? { recurrenceSeriesId: taskId } : {}),
   });
 
+  if (user) {
+    await rewardsService.handleTaskDatesChanged(user, [dateKeyFromDate(task.dueDate)]);
+  }
+
   return task;
 }
 
-async function updateTask(taskId, userId, body) {
+async function updateTask(taskId, userId, body, user) {
   const task = await getOwnedTask(taskId, userId);
   const updates = normalizeUpdatePayload(body);
+  const previousDueDate = dateKeyFromDate(task.dueDate);
 
   Object.assign(task, updates);
 
@@ -162,6 +168,15 @@ async function updateTask(taskId, userId, body) {
   }
 
   await task.save();
+
+  if (user) {
+    const nextDueDate = dateKeyFromDate(task.dueDate);
+    await rewardsService.handleTaskDatesChanged(
+      user,
+      previousDueDate === nextDueDate ? [nextDueDate] : [previousDueDate, nextDueDate]
+    );
+  }
+
   return task;
 }
 
@@ -233,21 +248,28 @@ async function setTaskCompletion(taskId, userId, body, user) {
     await task.save();
 
     const nextTask = await createNextOccurrence(task, user);
-    return { task, nextTask };
+    const rewards = await rewardsService.handleTaskCompletion(user, task);
+    return { task, nextTask, rewards };
   }
 
   if (!shouldComplete && currentlyCompleted) {
     task.status = 'pending';
     task.completedAt = null;
     await task.save();
+    const rewards = await rewardsService.handleTaskUndo(user, task);
+    return { task, nextTask: null, rewards };
   }
 
-  return { task, nextTask: null };
+  return { task, nextTask: null, rewards: null };
 }
 
-async function deleteTask(taskId, userId) {
+async function deleteTask(taskId, userId, user) {
   const task = await getOwnedTask(taskId, userId);
+  const dueDateKey = dateKeyFromDate(task.dueDate);
   await task.deleteOne();
+  if (user) {
+    await rewardsService.handleTaskDatesChanged(user, [dueDateKey]);
+  }
   return task;
 }
 

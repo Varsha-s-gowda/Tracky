@@ -11,6 +11,13 @@ const taskRoutes = require('./routes/taskRoutes');
 const habitRoutes = require('./routes/habitRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const calendarRoutes = require('./routes/calendarRoutes');
+const streakRoutes = require('./routes/streakRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const achievementRoutes = require('./routes/achievementRoutes');
+const xpRoutes = require('./routes/xpRoutes');
+const productivityRoutes = require('./routes/productivityRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const { seedAchievements } = require('./services/achievementService');
 
 const app = express();
 const allowedOrigins = env.clientUrl
@@ -46,6 +53,12 @@ app.use('/api/tasks', authMiddleware, taskRoutes);
 app.use('/api/habits', authMiddleware, habitRoutes);
 app.use('/api/dashboard', authMiddleware, dashboardRoutes);
 app.use('/api/calendar', authMiddleware, calendarRoutes);
+app.use('/api/streaks', authMiddleware, streakRoutes);
+app.use('/api/analytics', authMiddleware, analyticsRoutes);
+app.use('/api/achievements', authMiddleware, achievementRoutes);
+app.use('/api/xp', authMiddleware, xpRoutes);
+app.use('/api/productivity', authMiddleware, productivityRoutes);
+app.use('/api/settings', authMiddleware, settingsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -53,6 +66,7 @@ app.use(errorHandler);
 async function startServer() {
   try {
     await connectDB();
+    await seedAchievements();
 
     const server = app.listen(env.port, () => {
       console.log(`Tracky AI API running on http://localhost:${env.port}`);

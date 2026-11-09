@@ -7,27 +7,32 @@ const getTasks = asyncHandler(async (req, res) => {
 });
 
 const createTask = asyncHandler(async (req, res) => {
-  const task = await taskService.createTask(req.user._id, req.body || {});
+  const task = await taskService.createTask(req.user._id, req.body || {}, req.user);
   res.status(201).json({ task });
 });
 
 const updateTask = asyncHandler(async (req, res) => {
-  const task = await taskService.updateTask(req.params.id, req.user._id, req.body || {});
-  res.json({ task });
-});
-
-const completeTask = asyncHandler(async (req, res) => {
-  const { task, nextTask } = await taskService.setTaskCompletion(
+  const task = await taskService.updateTask(
     req.params.id,
     req.user._id,
     req.body || {},
     req.user
   );
-  res.json({ task, nextTask });
+  res.json({ task });
+});
+
+const completeTask = asyncHandler(async (req, res) => {
+  const { task, nextTask, rewards } = await taskService.setTaskCompletion(
+    req.params.id,
+    req.user._id,
+    req.body || {},
+    req.user
+  );
+  res.json({ task, nextTask, rewards });
 });
 
 const deleteTask = asyncHandler(async (req, res) => {
-  await taskService.deleteTask(req.params.id, req.user._id);
+  await taskService.deleteTask(req.params.id, req.user._id, req.user);
   res.json({ message: 'Task deleted successfully.' });
 });
 

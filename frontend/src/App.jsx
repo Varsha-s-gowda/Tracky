@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage';
 import TasksPage from './pages/TasksPage';
 import HabitsPage from './pages/HabitsPage';
 import CalendarPage from './pages/CalendarPage';
+import StreaksPage from './pages/StreaksPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AICoachPage from './pages/AICoachPage';
 import AchievementsPage from './pages/AchievementsPage';
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/habits" element={<HabitsPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/streaks" element={<StreaksPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/coach" element={<AICoachPage />} />
             <Route path="/achievements" element={<AchievementsPage />} />

@@ -96,6 +96,11 @@ export default {
           from: { opacity: '0', transform: 'translateX(18px)' },
           to: { opacity: '1', transform: 'translateX(0)' },
         },
+        unlock: {
+          '0%': { opacity: '0', transform: 'scale(0.92) translateY(6px)' },
+          '55%': { transform: 'scale(1.025) translateY(0)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
         shimmer: {
           '0%': { backgroundPosition: '-600px 0' },
           '100%': { backgroundPosition: '600px 0' },
@@ -106,6 +111,7 @@ export default {
         'slide-up': 'slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both',
         'scale-in': 'scale-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both',
         'slide-in-right': 'slide-in-right 0.28s ease-out both',
+        unlock: 'unlock 0.55s cubic-bezier(0.16, 1, 0.3, 1) both',
         shimmer: 'shimmer 1.6s linear infinite',
       },
     },

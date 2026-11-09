@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useDebounce } from '../hooks/useDebounce';
+import { useRewardToast } from '../hooks/useRewardToast';
 import { taskService } from '../services/taskService';
 import { PRIORITIES, TASK_SORT_OPTIONS } from '../utils/constants';
 import { relativeDateLabel, todayKey } from '../utils/date';
@@ -64,6 +65,7 @@ export default function TasksPage() {
   usePageTitle('My Tasks');
   const { user } = useAuth();
   const { toast } = useToast();
+  const { showRewards } = useRewardToast();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -149,6 +151,7 @@ export default function TasksPage() {
       } else {
         toast.success(completed ? 'Task completed.' : 'Task marked as pending.');
       }
+      if (completed) showRewards(result.rewards);
       await loadTasks();
     } catch (requestError) {
       toast.error(getErrorMessage(requestError, 'We could not update that task.'));

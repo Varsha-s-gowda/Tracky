@@ -2,13 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
+  Award,
   CalendarDays,
   CheckCircle2,
   Clock3,
+  Flame,
   ListTodo,
   Plus,
   Sparkles,
+  Target,
   TrendingUp,
+  Zap,
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -25,9 +29,11 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useRewardToast } from '../hooks/useRewardToast';
 import { dashboardService } from '../services/dashboardService';
 import { taskService } from '../services/taskService';
 import { habitService } from '../services/habitService';
+import { streakService } from '../services/streakService';
 import { formatFullDate, getGreeting, todayKey, relativeDateLabel } from '../utils/date';
 import { dailyMotivation } from '../utils/constants';
 import { getErrorMessage } from '../utils/errors';
@@ -104,7 +110,9 @@ export default function DashboardPage() {
   usePageTitle('Dashboard');
   const { user } = useAuth();
   const { toast } = useToast();
+  const { showRewards } = useRewardToast();
   const [data, setData] = useState(null);
+  const [streakData, setStreakData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [taskBusyId, setTaskBusyId] = useState(null);
@@ -118,8 +126,12 @@ export default function DashboardPage() {
     if (!silent) setLoading(true);
     setError('');
     try {
-      const dashboard = await dashboardService.getToday();
+      const [dashboard, streakOverview] = await Promise.all([
+        dashboardService.getToday(),
+        streakService.overview().catch(() => null),
+      ]);
       setData(dashboard);
+      if (streakOverview) setStreakData(streakOverview);
     } catch (requestError) {
       setError(getErrorMessage(requestError, 'We could not load your dashboard.'));
     } finally {
@@ -155,6 +167,7 @@ export default function DashboardPage() {
       } else {
         toast.success(completed ? 'Task completed.' : 'Task marked as pending.');
       }
+      if (completed) showRewards(result.rewards);
       await loadDashboard({ silent: true });
     } catch (requestError) {
       toast.error(getErrorMessage(requestError, 'We could not update that task.'));
@@ -167,11 +180,12 @@ export default function DashboardPage() {
     setHabitBusyId(habit._id);
     try {
       const completed = !habit.completedToday;
-      await habitService.log(habit._id, {
+      const result = await habitService.log(habit._id, {
         completed,
         date: data?.date || todayKey(user?.timezone),
       });
       toast.success(completed ? 'Habit completed for today.' : 'Habit completion undone.');
+      if (completed) showRewards(result.rewards);
       await loadDashboard({ silent: true });
     } catch (requestError) {
       toast.error(getErrorMessage(requestError, 'We could not update that habit.'));
@@ -377,6 +391,102 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-5">
+          <Card className="overflow-hidden">
+            <div className="flex items-center justify-between border-b border-ink-100 px-4 py-4 dark:border-white/[0.06] sm:px-5">
+              <div>
+                <h2 className="font-display text-[0.98rem] font-bold text-ink-900 dark:text-white">
+                  Momentum
+                </h2>
+                <p className="mt-0.5 text-xs text-ink-400 dark:text-ink-500">
+                  Streaks, level, and today's score
+                </p>
+              </div>
+              <Link
+                to="/streaks"
+                className="focus-ring inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-brand-600 transition hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-400/10"
+              >
+                Streaks
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+
+            <div className="space-y-4 px-4 py-4 sm:px-5">
+              <div className="flex items-center gap-3 rounded-xl bg-warning-50/70 px-3 py-3 dark:bg-warning-500/[0.07]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning-500 text-white">
+                  <Flame className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.1em] text-warning-700 dark:text-warning-500">
+                    Overall streak
+                  </p>
+                  <p className="font-display text-lg font-extrabold tracking-[-0.03em] text-ink-900 dark:text-white">
+                    {streakData?.overall?.currentStreak ?? 0} days
+                    <span className="ml-2 text-[0.62rem] font-semibold text-ink-400 dark:text-ink-500">
+                      best {streakData?.overall?.longestStreak ?? 0}
+                    </span>
+                  </p>
+                </div>
+                <Link
+                  to="/streaks"
+                  className="focus-ring shrink-0 rounded-lg p-1.5 text-warning-600 hover:bg-warning-100 dark:text-warning-500 dark:hover:bg-warning-500/10"
+                  aria-label="View streak details"
+                >
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-[0.65rem] font-semibold text-ink-500 dark:text-ink-400">
+                    <Award className="h-3 w-3 text-brand-500" />
+                    {data?.xp?.level?.name || 'Beginner'}
+                  </span>
+                  <span className="text-[0.62rem] font-semibold text-ink-400 dark:text-ink-500">
+                    {(data?.xp?.totalXp ?? 0).toLocaleString()} XP
+                  </span>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-ink-100 dark:bg-white/[0.07]">
+                  <div
+                    className="h-full rounded-full bg-brand-500 transition-[width] duration-700"
+                    style={{ width: `${data?.xp?.level?.isMaxLevel ? 100 : data?.xp?.level?.progress ?? 0}%` }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-[0.65rem] font-semibold text-ink-500 dark:text-ink-400">
+                    <Target className="h-3 w-3 text-success-500" />
+                    Today's score
+                  </span>
+                  <span className="text-[0.62rem] font-semibold text-ink-400 dark:text-ink-500">
+                    target {data?.productivity?.target ?? 60}
+                  </span>
+                </div>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink-100 dark:bg-white/[0.07]">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-[width] duration-700',
+                        (data?.productivity?.score ?? 0) >= (data?.productivity?.target ?? 60)
+                          ? 'bg-success-500'
+                          : 'bg-warning-500'
+                      )}
+                      style={{ width: `${data?.productivity?.score ?? 0}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-ink-900 dark:text-white">
+                    {data?.productivity?.score ?? 0}
+                  </span>
+                </div>
+                <p className="mt-1.5 flex items-center gap-1 text-[0.6rem] text-ink-400 dark:text-ink-500">
+                  <Zap className="h-2.5 w-2.5 text-brand-500" />
+                  +{data?.xp?.todayXp ?? 0} XP earned today
+                </p>
+              </div>
+            </div>
+          </Card>
+
           <Card className="p-5">
             <div className="flex items-start justify-between">
               <div>

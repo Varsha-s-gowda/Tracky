@@ -12,6 +12,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useRewardToast } from '../hooks/useRewardToast';
 import { habitService } from '../services/habitService';
 import { formatFullDate, todayKey } from '../utils/date';
 import { getErrorMessage } from '../utils/errors';
@@ -49,6 +50,7 @@ export default function HabitsPage() {
   usePageTitle('My Habits');
   const { user } = useAuth();
   const { toast } = useToast();
+  const { showRewards } = useRewardToast();
   const [habits, setHabits] = useState([]);
   const [date, setDate] = useState(todayKey(user?.timezone));
   const [loading, setLoading] = useState(true);
@@ -93,8 +95,9 @@ export default function HabitsPage() {
     setBusyHabitId(habit._id);
     try {
       const completed = !habit.completedToday;
-      await habitService.log(habit._id, { completed, date });
+      const result = await habitService.log(habit._id, { completed, date });
       toast.success(completed ? 'Habit completed for today.' : 'Habit completion undone.');
+      if (completed) showRewards(result.rewards);
       await loadHabits({ silent: true });
     } catch (requestError) {
       toast.error(getErrorMessage(requestError, 'We could not update that habit.'));

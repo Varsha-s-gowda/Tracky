@@ -81,6 +81,50 @@ function monthRange(monthKey) {
   return { start, end };
 }
 
+function eachDateKey(startKey, endKey) {
+  const keys = [];
+  let cursor = startKey;
+  let guard = 0;
+  while (cursor <= endKey && guard < 5000) {
+    keys.push(cursor);
+    cursor = addDaysToKey(cursor, 1);
+    guard += 1;
+  }
+  return keys;
+}
+
+function daysBetweenKeys(startKey, endKey) {
+  const start = dateKeyToUTCDate(startKey);
+  const end = dateKeyToUTCDate(endKey);
+  return Math.round((end - start) / 86400000);
+}
+
+/**
+ * Returns the Monday-based start of the week containing dateKey.
+ * weekStartsOn uses JavaScript weekday numbers (0 = Sunday, 1 = Monday).
+ */
+function startOfWeekKey(dateKeyValue, weekStartsOn = 1) {
+  const weekday = weekdayFromKey(dateKeyValue);
+  const offset = (weekday - weekStartsOn + 7) % 7;
+  return addDaysToKey(dateKeyValue, -offset);
+}
+
+function endOfWeekKey(dateKeyValue, weekStartsOn = 1) {
+  return addDaysToKey(startOfWeekKey(dateKeyValue, weekStartsOn), 6);
+}
+
+function monthKeyFromDateKey(dateKeyValue) {
+  return String(dateKeyValue).slice(0, 7);
+}
+
+function yearRange(year) {
+  const value = Number(year);
+  return {
+    start: `${value}-01-01`,
+    end: `${value}-12-31`,
+  };
+}
+
 module.exports = {
   DATE_KEY_PATTERN,
   MONTH_KEY_PATTERN,
@@ -96,4 +140,10 @@ module.exports = {
   weekdayFromKey,
   dayRange,
   monthRange,
+  eachDateKey,
+  daysBetweenKeys,
+  startOfWeekKey,
+  endOfWeekKey,
+  monthKeyFromDateKey,
+  yearRange,
 };

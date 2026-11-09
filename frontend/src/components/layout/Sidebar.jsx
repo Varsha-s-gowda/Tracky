@@ -4,6 +4,7 @@ import {
   BarChart3,
   Bot,
   CalendarDays,
+  Flame,
   LayoutDashboard,
   ListTodo,
   LogOut,
@@ -30,9 +31,10 @@ const NAV_GROUPS = [
   {
     label: 'Growth',
     items: [
-      { to: '/analytics', label: 'Analytics', icon: BarChart3, soon: true },
+      { to: '/streaks', label: 'Streaks', icon: Flame },
+      { to: '/analytics', label: 'Analytics', icon: BarChart3 },
+      { to: '/achievements', label: 'Achievements', icon: Trophy },
       { to: '/coach', label: 'AI Coach', icon: Bot, soon: true },
-      { to: '/achievements', label: 'Achievements', icon: Trophy, soon: true },
     ],
   },
   {

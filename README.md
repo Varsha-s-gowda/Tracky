@@ -126,7 +126,7 @@ MONGO_URI=mongodb://127.0.0.1:27017/tracky_ai
 JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_IN=7d
 JWT_REMEMBER_EXPIRES_IN=30d
-CLIENT_URL=http://localhost:5173
+CLIENT_URL=http://localhost:5173,http://localhost:5174
 ```
 
 Frontend — copy `frontend/.env.example` to `frontend/.env`:
@@ -159,7 +159,7 @@ cd frontend
 npm run dev
 ```
 
-Open `http://localhost:5173`, register an account, and start creating tasks and habits.
+Open `http://localhost:5174`, register an account, and start creating tasks and habits.
 
 ### Production build
 

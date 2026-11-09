@@ -12,6 +12,8 @@ const {
   weekdays,
 } = require('../utils/validation');
 const { dateKeyToUTCDate, todayKey, weekdayFromKey } = require('../utils/date');
+const rewardsService = require('./rewardsService');
+const productivityService = require('./productivityService');
 
 const FREQUENCIES = ['daily', 'weekly'];
 
@@ -130,26 +132,35 @@ async function getOwnedHabit(habitId, userId) {
   return habit;
 }
 
-async function createHabit(userId, body) {
+async function createHabit(userId, body, user) {
   const payload = normalizeCreatePayload(body);
   const habit = await Habit.create({ userId, ...payload });
+  if (user) {
+    await productivityService.recomputeDay(user, todayKey(user.timezone));
+  }
   return habit;
 }
 
-async function updateHabit(habitId, userId, body) {
+async function updateHabit(habitId, userId, body, user) {
   const habit = await getOwnedHabit(habitId, userId);
   const updates = normalizeUpdatePayload(body, habit);
   Object.assign(habit, updates);
   await habit.save();
+  if (user) {
+    await productivityService.recomputeDay(user, todayKey(user.timezone));
+  }
   return habit;
 }
 
-async function deleteHabit(habitId, userId) {
+async function deleteHabit(habitId, userId, user) {
   const habit = await getOwnedHabit(habitId, userId);
   await Promise.all([
     habit.deleteOne(),
     HabitLog.deleteMany({ userId, habitId: habit._id }),
   ]);
+  if (user) {
+    await productivityService.recomputeDay(user, todayKey(user.timezone));
+  }
   return habit;
 }
 
@@ -172,13 +183,15 @@ async function logHabit(habitId, userId, body, user) {
       { $set: update, $setOnInsert: { userId, habitId: habit._id, date: dateValue } },
       { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
     );
-    return { log, habit, date };
+    const rewards = await rewardsService.handleHabitLog(user, habit, date, completed);
+    return { log, habit, date, rewards };
   } catch (error) {
     // Two concurrent requests can both attempt the upsert. The unique index
     // guarantees one record, so retry as a normal update for the loser.
     if (error.code === 11000) {
       const log = await HabitLog.findOneAndUpdate(filter, { $set: update }, { new: true });
-      return { log, habit, date };
+      const rewards = await rewardsService.handleHabitLog(user, habit, date, completed);
+      return { log, habit, date, rewards };
     }
     throw error;
   }

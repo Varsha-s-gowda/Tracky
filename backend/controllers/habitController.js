@@ -7,22 +7,27 @@ const getHabits = asyncHandler(async (req, res) => {
 });
 
 const createHabit = asyncHandler(async (req, res) => {
-  const habit = await habitService.createHabit(req.user._id, req.body || {});
+  const habit = await habitService.createHabit(req.user._id, req.body || {}, req.user);
   res.status(201).json({ habit });
 });
 
 const updateHabit = asyncHandler(async (req, res) => {
-  const habit = await habitService.updateHabit(req.params.id, req.user._id, req.body || {});
+  const habit = await habitService.updateHabit(
+    req.params.id,
+    req.user._id,
+    req.body || {},
+    req.user
+  );
   res.json({ habit });
 });
 
 const deleteHabit = asyncHandler(async (req, res) => {
-  await habitService.deleteHabit(req.params.id, req.user._id);
+  await habitService.deleteHabit(req.params.id, req.user._id, req.user);
   res.json({ message: 'Habit deleted successfully.' });
 });
 
 const logHabit = asyncHandler(async (req, res) => {
-  const { log, habit, date } = await habitService.logHabit(
+  const { log, habit, date, rewards } = await habitService.logHabit(
     req.params.id,
     req.user._id,
     req.body || {},
@@ -39,6 +44,7 @@ const logHabit = asyncHandler(async (req, res) => {
       completedToday: log.completed,
       scheduledToday: habitService.isScheduledOn(habit, date),
     },
+    rewards,
   });
 });
 
