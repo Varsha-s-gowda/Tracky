@@ -1,0 +1,99 @@
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const MONTH_KEY_PATTERN = /^\d{4}-\d{2}$/;
+
+function isValidDateKey(value) {
+  if (typeof value !== 'string' || !DATE_KEY_PATTERN.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function isValidMonthKey(value) {
+  if (typeof value !== 'string' || !MONTH_KEY_PATTERN.test(value)) return false;
+  const month = Number(value.slice(5, 7));
+  return month >= 1 && month <= 12;
+}
+
+function dateKeyToUTCDate(dateKey) {
+  return new Date(`${dateKey}T00:00:00.000Z`);
+}
+
+function dateKeyFromDate(date) {
+  return new Date(date).toISOString().slice(0, 10);
+}
+
+/**
+ * Returns a YYYY-MM-DD key for a Date in a specific IANA timezone.
+ */
+function dateKeyInTimeZone(date, timeZone = 'UTC') {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function todayKey(timeZone = 'UTC') {
+  return dateKeyInTimeZone(new Date(), timeZone);
+}
+
+function addDaysToKey(dateKey, days) {
+  const date = dateKeyToUTCDate(dateKey);
+  date.setUTCDate(date.getUTCDate() + Number(days));
+  return dateKeyFromDate(date);
+}
+
+function addMonthsToKey(dateKey, months) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const target = new Date(Date.UTC(year, month - 1 + Number(months), 1));
+  const daysInTargetMonth = new Date(
+    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)
+  ).getUTCDate();
+  target.setUTCDate(Math.min(day, daysInTargetMonth));
+  return dateKeyFromDate(target);
+}
+
+function nextRecurrenceDateKey(dateKey, recurrence) {
+  if (recurrence === 'daily') return addDaysToKey(dateKey, 1);
+  if (recurrence === 'weekly') return addDaysToKey(dateKey, 7);
+  if (recurrence === 'monthly') return addMonthsToKey(dateKey, 1);
+  return null;
+}
+
+function weekdayFromKey(dateKey) {
+  return dateKeyToUTCDate(dateKey).getUTCDay();
+}
+
+function dayRange(dateKey) {
+  const start = dateKeyToUTCDate(dateKey);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  return { start, end };
+}
+
+function monthRange(monthKey) {
+  const [year, month] = monthKey.split('-').map(Number);
+  const start = new Date(Date.UTC(year, month - 1, 1));
+  const end = new Date(Date.UTC(year, month, 1));
+  return { start, end };
+}
+
+module.exports = {
+  DATE_KEY_PATTERN,
+  MONTH_KEY_PATTERN,
+  isValidDateKey,
+  isValidMonthKey,
+  dateKeyToUTCDate,
+  dateKeyFromDate,
+  dateKeyInTimeZone,
+  todayKey,
+  addDaysToKey,
+  addMonthsToKey,
+  nextRecurrenceDateKey,
+  weekdayFromKey,
+  dayRange,
+  monthRange,
+};
