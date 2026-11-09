@@ -58,6 +58,15 @@ const taskSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    postponeCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    lastPostponedAt: {
+      type: Date,
+      default: null,
+    },
     recurrenceSeriesId: {
       type: mongoose.Schema.Types.ObjectId,
       index: true,

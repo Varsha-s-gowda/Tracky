@@ -159,6 +159,16 @@ async function updateTask(taskId, userId, body, user) {
   const updates = normalizeUpdatePayload(body);
   const previousDueDate = dateKeyFromDate(task.dueDate);
 
+  // Track how often a pending task is pushed to a later date. The AI coach uses
+  // this real signal to spot work the user keeps avoiding.
+  if (updates.dueDate && task.status === 'pending') {
+    const nextDueDate = dateKeyFromDate(updates.dueDate);
+    if (nextDueDate > previousDueDate) {
+      task.postponeCount = (task.postponeCount || 0) + 1;
+      task.lastPostponedAt = new Date();
+    }
+  }
+
   Object.assign(task, updates);
 
   if (task.recurrence === 'none') {
@@ -178,6 +188,24 @@ async function updateTask(taskId, userId, body, user) {
   }
 
   return task;
+}
+
+async function createTasks(user, items = []) {
+  const payloads = items.map((item) => normalizeCreatePayload(item || {}));
+  const documents = payloads.map((payload) => {
+    const taskId = new mongoose.Types.ObjectId();
+    return {
+      _id: taskId,
+      userId: user._id,
+      ...payload,
+      ...(payload.recurrence !== 'none' ? { recurrenceSeriesId: taskId } : {}),
+    };
+  });
+
+  const tasks = await Task.insertMany(documents);
+  const dates = [...new Set(payloads.map((payload) => dateKeyFromDate(payload.dueDate)))];
+  await rewardsService.handleTaskDatesChanged(user, dates);
+  return tasks;
 }
 
 async function createNextOccurrence(task, user) {
@@ -276,6 +304,7 @@ async function deleteTask(taskId, userId, user) {
 module.exports = {
   listTasks,
   createTask,
+  createTasks,
   updateTask,
   setTaskCompletion,
   deleteTask,

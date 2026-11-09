@@ -46,6 +46,38 @@ const userSchema = new mongoose.Schema(
         message: 'Invalid timezone.',
       },
     },
+    goals: {
+      type: [
+        new mongoose.Schema(
+          {
+            title: {
+              type: String,
+              required: true,
+              trim: true,
+              maxlength: [120, 'Goal title must be at most 120 characters.'],
+            },
+            description: { type: String, trim: true, default: '', maxlength: 500 },
+            targetDate: { type: Date, default: null },
+            status: {
+              type: String,
+              enum: ['active', 'completed'],
+              default: 'active',
+            },
+            createdAt: { type: Date, default: Date.now },
+          },
+          { _id: true }
+        ),
+      ],
+      default: [],
+    },
+    workingHours: {
+      start: { type: String, default: '09:00', match: [/^([01]\d|2[0-3]):[0-5]\d$/, 'Working hours must use HH:mm format.'] },
+      end: { type: String, default: '17:00', match: [/^([01]\d|2[0-3]):[0-5]\d$/, 'Working hours must use HH:mm format.'] },
+      daysOfWeek: {
+        type: [Number],
+        default: [1, 2, 3, 4, 5],
+      },
+    },
     resetPasswordTokenHash: {
       type: String,
       select: false,

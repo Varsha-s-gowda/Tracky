@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   BellRing,
+  Bot,
   Check,
   CheckCircle2,
   Clock3,
@@ -29,6 +30,7 @@ import { Input, Select } from '../components/ui/Input';
 import Toggle from '../components/ui/Toggle';
 import FormAlert from '../components/auth/FormAlert';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { useSettings } from '../context/SettingsContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
@@ -36,6 +38,17 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { getTimezoneOptions, timezoneLabel } from '../utils/date';
 import { getErrorMessage } from '../utils/errors';
 import { cn } from '../utils/cn';
+
+const COACH_TONES = [
+  { value: 'supportive', label: 'Supportive', hint: 'Warm, encouraging, and steady.' },
+  { value: 'direct', label: 'Direct', hint: 'Short, honest, and to the point.' },
+  { value: 'analytical', label: 'Analytical', hint: 'Data-first with clear reasoning.' },
+];
+
+const COACH_DETAILS = [
+  { value: 'concise', label: 'Concise', hint: 'A few focused paragraphs.' },
+  { value: 'detailed', label: 'Detailed', hint: 'Structured guidance with more depth.' },
+];
 
 const THEMES = [
   {
@@ -91,6 +104,7 @@ export default function SettingsPage() {
   usePageTitle('Settings');
   const { user, updateProfile, logout } = useAuth();
   const { settings, loading: settingsLoading, update } = useSettings();
+  const { requestBrowserPermission } = useNotifications();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -131,6 +145,27 @@ export default function SettingsPage() {
     }));
   };
 
+  const handleBrowserToggle = async (value) => {
+    if (!value) {
+      updateNotification('browserNotifications', false);
+      return;
+    }
+    try {
+      const result = await requestBrowserPermission();
+      if (!result.supported) {
+        toast.error('This browser does not support notifications.');
+        return;
+      }
+      if (result.permission !== 'granted') {
+        toast.error('Browser notifications were not allowed. Enable them in your browser settings.');
+        return;
+      }
+      updateNotification('browserNotifications', true);
+    } catch {
+      toast.error('Browser notifications could not be enabled.');
+    }
+  };
+
   const handleTimezoneSave = async (event) => {
     event.preventDefault();
     setTimezoneError('');
@@ -163,7 +198,16 @@ export default function SettingsPage() {
           weeklySummary: draft.notifications.weeklySummary,
           dailyReminder: draft.notifications.dailyReminder,
           reminderTime: draft.notifications.reminderTime || '09:00',
+          taskReminders: draft.notifications.taskReminders,
+          habitReminders: draft.notifications.habitReminders,
+          streakMilestones: draft.notifications.streakMilestones,
+          dailyGoal: draft.notifications.dailyGoal,
+          dailyReports: draft.notifications.dailyReports,
+          weeklyReports: draft.notifications.weeklyReports,
+          browserNotifications: draft.notifications.browserNotifications,
         },
+        coachTone: draft.coachTone,
+        coachDetail: draft.coachDetail,
       });
       toast.success('Preferences saved.', {
         description: 'Your targets and notification choices are now active.',
@@ -362,6 +406,69 @@ export default function SettingsPage() {
                     </div>
                   ) : null}
                 </div>
+                <div className="px-5 py-4 sm:px-6">
+                  <Toggle
+                    id="task-reminders"
+                    checked={draft.notifications.taskReminders}
+                    onChange={(value) => updateNotification('taskReminders', value)}
+                    label="Task reminders"
+                    description="Surface tasks that are due today or already overdue."
+                  />
+                </div>
+                <div className="px-5 py-4 sm:px-6">
+                  <Toggle
+                    id="habit-reminders"
+                    checked={draft.notifications.habitReminders}
+                    onChange={(value) => updateNotification('habitReminders', value)}
+                    label="Habit reminders"
+                    description="Nudge you about habits that are still unchecked today."
+                  />
+                </div>
+                <div className="px-5 py-4 sm:px-6">
+                  <Toggle
+                    id="streak-milestones"
+                    checked={draft.notifications.streakMilestones}
+                    onChange={(value) => updateNotification('streakMilestones', value)}
+                    label="Streak milestones"
+                    description="Celebrate 7, 30, and 100-day streaks as you reach them."
+                  />
+                </div>
+                <div className="px-5 py-4 sm:px-6">
+                  <Toggle
+                    id="daily-goal"
+                    checked={draft.notifications.dailyGoal}
+                    onChange={(value) => updateNotification('dailyGoal', value)}
+                    label="Daily goal reached"
+                    description="Get a note when your productivity score hits today's target."
+                  />
+                </div>
+                <div className="px-5 py-4 sm:px-6">
+                  <Toggle
+                    id="daily-reports"
+                    checked={draft.notifications.dailyReports}
+                    onChange={(value) => updateNotification('dailyReports', value)}
+                    label="Daily AI reports"
+                    description="Save a real data-driven report for each active day."
+                  />
+                </div>
+                <div className="px-5 py-4 sm:px-6">
+                  <Toggle
+                    id="weekly-reports"
+                    checked={draft.notifications.weeklyReports}
+                    onChange={(value) => updateNotification('weeklyReports', value)}
+                    label="Weekly AI reports"
+                    description="Create a weekly recap once a week has recorded activity."
+                  />
+                </div>
+                <div className="px-5 py-4 sm:px-6">
+                  <Toggle
+                    id="browser-notifications"
+                    checked={draft.notifications.browserNotifications}
+                    onChange={handleBrowserToggle}
+                    label="Browser notifications"
+                    description="Requires your browser's permission. Tracky never asks twice without you opting in again."
+                  />
+                </div>
               </div>
               <div className="flex flex-col-reverse gap-2 border-t border-ink-100 px-5 py-4 dark:border-white/[0.06] sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <p className="text-[0.65rem] text-ink-400 dark:text-ink-500">
@@ -374,6 +481,46 @@ export default function SettingsPage() {
                 >
                   Save preferences
                 </Button>
+              </div>
+            </Card>
+
+            <Card>
+              <CardHeading
+                icon={Bot}
+                title="AI coach style"
+                description="Choose how your coach speaks. This affects live chat replies and the depth of guidance."
+              />
+              <div className="grid gap-4 px-5 py-5 sm:grid-cols-2 sm:px-6">
+                <Select
+                  label="Coach tone"
+                  value={draft.coachTone}
+                  onChange={(event) => updateDraft('coachTone', event.target.value)}
+                  hint={COACH_TONES.find((tone) => tone.value === draft.coachTone)?.hint}
+                >
+                  {COACH_TONES.map((tone) => (
+                    <option key={tone.value} value={tone.value}>
+                      {tone.label}
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  label="Detail level"
+                  value={draft.coachDetail}
+                  onChange={(event) => updateDraft('coachDetail', event.target.value)}
+                  hint={COACH_DETAILS.find((detail) => detail.value === draft.coachDetail)?.hint}
+                >
+                  {COACH_DETAILS.map((detail) => (
+                    <option key={detail.value} value={detail.value}>
+                      {detail.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div className="border-t border-ink-100 px-5 py-3.5 dark:border-white/[0.06] sm:px-6">
+                <p className="text-[0.65rem] leading-4 text-ink-400 dark:text-ink-500">
+                  These preferences only change wording, never the underlying data. Your coach always
+                  reads your real tasks, habits, streaks, and scores.
+                </p>
               </div>
             </Card>
 
@@ -592,7 +739,7 @@ export default function SettingsPage() {
             </Card>
 
             <div className="px-1 text-center text-[0.65rem] text-ink-400 dark:text-ink-600">
-              Tracky AI · Part 2 streaks &amp; insights · v2.0
+              Tracky AI · Part 3 · AI coach &amp; smart notifications · v3.0
             </div>
           </div>
         </div>

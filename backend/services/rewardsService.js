@@ -4,6 +4,7 @@ const xpService = require('./xpService');
 const streakService = require('./streakService');
 const achievementService = require('./achievementService');
 const productivityService = require('./productivityService');
+const notificationService = require('./notificationService');
 
 function plainAwards(awards) {
   return awards
@@ -28,6 +29,11 @@ async function handleTaskCompletion(user, task) {
 
   await productivityService.recomputeDates(user, [dueDateKey, completionDateKey]);
   const achievementResult = await achievementService.evaluateAchievements(user, { notify: true });
+  if (achievementResult.newlyUnlocked.length) {
+    await notificationService
+      .createAchievementNotifications(user, achievementResult.newlyUnlocked)
+      .catch((error) => console.error('Achievement notification failed:', error.message));
+  }
   const xp = await xpService.getXpSnapshot(user);
 
   const plain = plainAwards(awards);
@@ -83,6 +89,11 @@ async function handleHabitLog(user, habit, dateKeyValue, completed) {
 
   await productivityService.recomputeDay(user, dateKeyValue);
   const achievementResult = await achievementService.evaluateAchievements(user, { notify: true });
+  if (achievementResult.newlyUnlocked.length) {
+    await notificationService
+      .createAchievementNotifications(user, achievementResult.newlyUnlocked)
+      .catch((error) => console.error('Achievement notification failed:', error.message));
+  }
   const xp = await xpService.getXpSnapshot(user);
 
   const plain = plainAwards(awards);

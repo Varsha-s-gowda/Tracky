@@ -10,6 +10,7 @@ const {
   optionalString,
 } = require('../utils/validation');
 const { signToken, createResetToken, hashResetToken } = require('../services/tokenService');
+const { clearContextCache } = require('../services/aiContextService');
 
 function assertProfileImage(value) {
   const image = optionalString(value, 'Profile image URL', { max: 500 });
@@ -100,6 +101,8 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   await user.save();
+  // Timezone changes shift day boundaries, so cached AI context is no longer valid.
+  clearContextCache(req.user._id);
   res.json({ user });
 });
 

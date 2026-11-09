@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Bell, Menu } from 'lucide-react';
 import Logo from '../ui/Logo';
 import Avatar from '../ui/Avatar';
 import ThemeToggle from '../ui/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { formatDate, todayKey } from '../../utils/date';
 
 const TITLES = {
@@ -13,6 +14,7 @@ const TITLES = {
   '/calendar': 'Calendar',
   '/analytics': 'Analytics',
   '/coach': 'AI Coach',
+  '/notifications': 'Notifications',
   '/achievements': 'Achievements',
   '/settings': 'Settings',
   '/profile': 'Profile',
@@ -20,6 +22,7 @@ const TITLES = {
 
 export default function Topbar({ onMenuClick }) {
   const { user } = useAuth();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
   const title = TITLES[location.pathname] || 'Tracky AI';
 
@@ -51,6 +54,23 @@ export default function Topbar({ onMenuClick }) {
         </span>
         <span className="hidden h-5 w-px bg-ink-200 dark:bg-white/10 md:block" />
         <ThemeToggle />
+        <Link
+          to="/notifications"
+          className="focus-ring relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-ink-200 bg-white text-ink-500 shadow-sm transition hover:border-ink-300 hover:text-ink-800 dark:border-white/10 dark:bg-white/[0.04] dark:text-ink-300 dark:hover:border-white/20 dark:hover:text-white"
+          aria-label={
+            unreadCount > 0
+              ? `Notifications, ${unreadCount} unread`
+              : 'Notifications'
+          }
+          title="Notifications"
+        >
+          <Bell className="h-[18px] w-[18px]" />
+          {unreadCount > 0 ? (
+            <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger-500 px-1 text-[0.58rem] font-bold text-white ring-2 ring-white dark:ring-surface-dark">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          ) : null}
+        </Link>
         <Link
           to="/profile"
           className="focus-ring rounded-full transition hover:opacity-85"

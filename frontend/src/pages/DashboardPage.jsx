@@ -23,6 +23,7 @@ import { Skeleton } from '../components/ui/Loaders';
 import StatCard from '../components/dashboard/StatCard';
 import HabitQuickRow from '../components/dashboard/HabitQuickRow';
 import UpcomingTaskRow from '../components/dashboard/UpcomingTaskRow';
+import AICoachCard from '../components/ai/AICoachCard';
 import TaskItem from '../components/tasks/TaskItem';
 import TaskModal from '../components/tasks/TaskModal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -391,6 +392,8 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-5">
+          <AICoachCard />
+
           <Card className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-ink-100 px-4 py-4 dark:border-white/[0.06] sm:px-5">
               <div>

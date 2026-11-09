@@ -1,6 +1,6 @@
 const UserSettings = require('../models/UserSettings');
 const ApiError = require('../utils/ApiError');
-const { booleanValue, numberInRange, timeString } = require('../utils/validation');
+const { booleanValue, numberInRange, timeString, oneOf } = require('../utils/validation');
 
 const DEFAULT_SETTINGS = {
   dailyCompletionTarget: 60,
@@ -15,7 +15,16 @@ const DEFAULT_SETTINGS = {
     weeklySummary: true,
     dailyReminder: false,
     reminderTime: '09:00',
+    taskReminders: true,
+    habitReminders: true,
+    streakMilestones: true,
+    dailyGoal: true,
+    dailyReports: true,
+    weeklyReports: true,
+    browserNotifications: false,
   },
+  coachTone: 'supportive',
+  coachDetail: 'concise',
 };
 
 function plainSettings(document) {
@@ -32,6 +41,8 @@ function plainSettings(document) {
       ...DEFAULT_SETTINGS.notifications,
       ...(value.notifications || {}),
     },
+    coachTone: value.coachTone || DEFAULT_SETTINGS.coachTone,
+    coachDetail: value.coachDetail || DEFAULT_SETTINGS.coachDetail,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
   };
@@ -68,7 +79,19 @@ function normalizeNotifications(value, current) {
   const base = { ...DEFAULT_SETTINGS.notifications, ...(current || {}) };
   const updates = {};
 
-  for (const key of ['xpAlerts', 'achievementAlerts', 'weeklySummary', 'dailyReminder']) {
+  for (const key of [
+    'xpAlerts',
+    'achievementAlerts',
+    'weeklySummary',
+    'dailyReminder',
+    'taskReminders',
+    'habitReminders',
+    'streakMilestones',
+    'dailyGoal',
+    'dailyReports',
+    'weeklyReports',
+    'browserNotifications',
+  ]) {
     if (Object.prototype.hasOwnProperty.call(input, key)) {
       updates[key] = booleanValue(input[key], key);
     }
@@ -98,6 +121,18 @@ async function updateSettings(userId, body = {}) {
 
   if (Object.prototype.hasOwnProperty.call(body, 'notifications')) {
     updates.notifications = normalizeNotifications(body.notifications, settings.notifications);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'coachTone')) {
+    updates.coachTone = oneOf(
+      body.coachTone,
+      ['supportive', 'direct', 'analytical'],
+      'Coach tone'
+    );
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'coachDetail')) {
+    updates.coachDetail = oneOf(body.coachDetail, ['concise', 'detailed'], 'Coach detail level');
   }
 
   if (!Object.keys(updates).length) {

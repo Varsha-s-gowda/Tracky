@@ -65,6 +65,12 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const data = await authService.me();
+    setUser(data.user);
+    return data.user;
+  }, []);
+
   const changePassword = useCallback(async (payload) => {
     return authService.changePassword(payload);
   }, []);
@@ -83,9 +89,10 @@ export function AuthProvider({ children }) {
       register,
       logout,
       updateProfile,
+      refreshUser,
       changePassword,
     }),
-    [user, initializing, login, register, logout, updateProfile, changePassword]
+    [user, initializing, login, register, logout, updateProfile, refreshUser, changePassword]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

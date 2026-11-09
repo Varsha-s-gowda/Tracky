@@ -12,6 +12,7 @@ import CalendarPage from './pages/CalendarPage';
 import StreaksPage from './pages/StreaksPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AICoachPage from './pages/AICoachPage';
+import NotificationsPage from './pages/NotificationsPage';
 import AchievementsPage from './pages/AchievementsPage';
 import SettingsPage from './pages/SettingsPage';
 import ProfilePage from './pages/ProfilePage';
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="/streaks" element={<StreaksPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/coach" element={<AICoachPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/achievements" element={<AchievementsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/profile" element={<ProfilePage />} />

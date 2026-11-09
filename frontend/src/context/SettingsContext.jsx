@@ -22,7 +22,16 @@ export const DEFAULT_SETTINGS = {
     weeklySummary: true,
     dailyReminder: false,
     reminderTime: '09:00',
+    taskReminders: true,
+    habitReminders: true,
+    streakMilestones: true,
+    dailyGoal: true,
+    dailyReports: true,
+    weeklyReports: true,
+    browserNotifications: false,
   },
+  coachTone: 'supportive',
+  coachDetail: 'concise',
 };
 
 const SettingsContext = createContext(null);

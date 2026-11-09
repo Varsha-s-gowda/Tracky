@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
+  Bell,
   Bot,
   CalendarDays,
   Flame,
@@ -16,6 +17,7 @@ import {
 import Logo from '../ui/Logo';
 import Avatar from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { cn } from '../../utils/cn';
 
 const NAV_GROUPS = [
@@ -34,17 +36,21 @@ const NAV_GROUPS = [
       { to: '/streaks', label: 'Streaks', icon: Flame },
       { to: '/analytics', label: 'Analytics', icon: BarChart3 },
       { to: '/achievements', label: 'Achievements', icon: Trophy },
-      { to: '/coach', label: 'AI Coach', icon: Bot, soon: true },
+      { to: '/coach', label: 'AI Coach', icon: Bot },
     ],
   },
   {
     label: 'Account',
-    items: [{ to: '/settings', label: 'Settings', icon: Settings }],
+    items: [
+      { to: '/notifications', label: 'Notifications', icon: Bell, badge: 'unread' },
+      { to: '/settings', label: 'Settings', icon: Settings },
+    ],
   },
 ];
 
 export default function Sidebar({ open, onClose }) {
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -124,9 +130,9 @@ export default function Sidebar({ open, onClose }) {
                             strokeWidth={isActive ? 2.2 : 1.9}
                           />
                           <span className="flex-1">{item.label}</span>
-                          {item.soon ? (
-                            <span className="rounded-md bg-ink-100 px-1.5 py-0.5 text-[0.55rem] font-bold uppercase tracking-[0.08em] text-ink-400 dark:bg-white/[0.06] dark:text-ink-500">
-                              Soon
+                          {item.badge === 'unread' && unreadCount > 0 ? (
+                            <span className="rounded-full bg-danger-500 px-1.5 py-0.5 text-[0.55rem] font-bold text-white">
+                              {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                           ) : null}
                         </>

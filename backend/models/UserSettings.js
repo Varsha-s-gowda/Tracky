@@ -35,6 +35,13 @@ const notificationSchema = new mongoose.Schema(
       default: '09:00',
       match: [/^([01]\d|2[0-3]):[0-5]\d$/, 'Reminder time must use HH:mm format.'],
     },
+    taskReminders: { type: Boolean, default: true },
+    habitReminders: { type: Boolean, default: true },
+    streakMilestones: { type: Boolean, default: true },
+    dailyGoal: { type: Boolean, default: true },
+    dailyReports: { type: Boolean, default: true },
+    weeklyReports: { type: Boolean, default: true },
+    browserNotifications: { type: Boolean, default: false },
   },
   { _id: false }
 );
@@ -61,6 +68,16 @@ const userSettingsSchema = new mongoose.Schema(
     notifications: {
       type: notificationSchema,
       default: () => ({}),
+    },
+    coachTone: {
+      type: String,
+      enum: ['supportive', 'direct', 'analytical'],
+      default: 'supportive',
+    },
+    coachDetail: {
+      type: String,
+      enum: ['concise', 'detailed'],
+      default: 'concise',
     },
   },
   { timestamps: true }
